@@ -2,7 +2,6 @@
   "mcq": [
     { "id": 1, "question": "ما هو مستواك التعليمي؟", "options": ["ثانوي", "دبلوم", "بكالوريوس", "ماجستير", "دكتوراه"], "matching": true, "factor_key": "education", "matching_method": "ordinal", "matching_order": ["ثانوي", "دبلوم", "بكالوريوس", "ماجستير", "دكتوراه"] },
     { "id": 2, "question": "ما هو المستوى المادي المناسب لك؟", "options": ["بسيط", "متوسط", "مرتفع", "لا يهم"], "matching": true, "factor_key": "financial_expectation", "matching_method": "ordinal", "matching_order": ["بسيط", "متوسط", "مرتفع"], "matching_neutral_options": ["لا يهم"], "matching_distance_scores": { "0": 100, "1": 75, "2": 0 } },
-    { "id": 3, "question": "هل تفضل الزواج من خارج بلدك؟", "options": ["نعم", "لا", "ليس مهماً"], "matching": true, "factor_key": "marriage_country_preference", "matching_method": "pair_preference", "matching_relation_source": "user", "matching_relation_key": "country", "matching_relation_scores": { "same": { "نعم": 0, "لا": 100, "ليس مهماً": 100 }, "different": { "نعم": 100, "لا": 0, "ليس مهماً": 100 } } },
     { "id": 4, "question": "ما هي الصفة الأكثر أهمية في شريك حياتك؟", "options": ["التدين", "الأخلاق", "المظهر", "الثقافة", "الاستقرار المالي"], "matching": true, "factor_key": "partner_priority", "matching_method": "exact" }
   ],
   "open": [
