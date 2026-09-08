@@ -1,0 +1,62 @@
+[
+  {
+    "code": "DEMO001", "full_name": "أحمد خالد", "gender": "ذكر", "birthday": "1994-04-12", "country": "قطر", "phone": "50000001", "email": "demo1@example.test",
+    "profile_details": {"nationality": "قطري", "profession": "مهندس", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "3 أشهر", "height": 178, "weight": 78, "age_min": 24, "age_max": 31, "height_min": 155, "height_max": 175, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "بكالوريوس", "q2": "متوسط", "q3": "ليس مهماً", "q4": "الأخلاق"},
+    "open_answers": {"q1": "شخص هادئ ومسؤول، أقدّر الأسرة والحوار.", "q2": "أتطلع إلى شريكة جادة ومتفاهمة تحترم الحياة الأسرية.", "q3": "أطمح إلى بيت مستقر تسوده المودة والتعاون.", "q4": "الوضوح والاحترام المتبادل."}
+  },
+  {
+    "code": "DEMO002", "full_name": "يوسف عبدالله", "gender": "ذكر", "birthday": "1990-09-03", "country": "السعودية", "phone": "50000002", "email": "demo2@example.test",
+    "profile_details": {"nationality": "سعودي", "profession": "طبيب", "marital_status": "متزوج سابقاً", "marriage_timeline": "6 أشهر", "height": 182, "weight": 86, "age_min": 27, "age_max": 38, "height_min": 155, "height_max": 180, "marital_preference": "لا يهم", "nationality_preference": "لا يهم", "has_children": "لا", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "دكتوراه", "q2": "مرتفع", "q3": "نعم", "q4": "التدين"},
+    "open_answers": {"q1": "طبيب محب للتعلم والعمل التطوعي.", "q2": "أبحث عن شريكة تشاركني قيم الرحمة والاستقرار.", "q3": "أسرة متعاونة تهتم بالتربية وصلة الرحم.", "q4": "أفضل التفاهم الهادئ عند الاختلاف."}
+  },
+  {
+    "code": "DEMO003", "full_name": "عمر حسن", "gender": "ذكر", "birthday": "1997-01-20", "country": "الإمارات", "phone": "50000003", "email": "demo3@example.test",
+    "profile_details": {"nationality": "إماراتي", "profession": "محاسب", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "سنة واحدة", "height": 174, "weight": 72, "age_min": 23, "age_max": 30, "height_min": 150, "height_max": 172, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "إماراتي", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "بكالوريوس", "q2": "متوسط", "q3": "لا", "q4": "الثقافة"},
+    "open_answers": {"q1": "عملي ومنظم وأحب القراءة والسفر الهادئ.", "q2": "أرغب في شريكة واعية تقدّر التخطيط المشترك.", "q3": "حياة متوازنة بين الأسرة والعمل والتعلم.", "q4": "لا توجد شروط إضافية."}
+  },
+  {
+    "code": "DEMO004", "full_name": "سلمان إبراهيم", "gender": "ذكر", "birthday": "1992-07-08", "country": "الكويت", "phone": "50000004", "email": "demo4@example.test",
+    "profile_details": {"nationality": "كويتي", "profession": "رائد أعمال", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "شهر واحد", "height": 185, "weight": 92, "age_min": 25, "age_max": 34, "height_min": 158, "height_max": 178, "marital_preference": "لا يهم", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "ماجستير", "q2": "مرتفع", "q3": "ليس مهماً", "q4": "الاستقرار المالي"},
+    "open_answers": {"q1": "طموح وملتزم وأهتم بالأسرة.", "q2": "أبحث عن شريكة صريحة ومتعاونة.", "q3": "أتمنى تأسيس أسرة مستقرة ومساندة.", "q4": "الاستعداد الجاد للزواج."}
+  },
+  {
+    "code": "DEMO005", "full_name": "زياد محمود", "gender": "ذكر", "birthday": "1999-11-15", "country": "قطر", "phone": "50000005", "email": "demo5@example.test",
+    "profile_details": {"nationality": "مصري", "profession": "مصمم", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "6 أشهر", "height": 171, "weight": 68, "age_min": 22, "age_max": 29, "height_min": 150, "height_max": 175, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "بكالوريوس", "q2": "بسيط", "q3": "نعم", "q4": "الأخلاق"},
+    "open_answers": {"q1": "مبدع وبسيط وأحب المشاركة المجتمعية.", "q2": "أقدّر شريكة مرنة ومحبة للعائلة.", "q3": "بيت دافئ قائم على الاحترام.", "q4": "أفضل البساطة في تفاصيل الحياة."}
+  },
+  {
+    "code": "DEMO006", "full_name": "مريم علي", "gender": "أنثى", "birthday": "1998-02-17", "country": "قطر", "phone": "50000006", "email": "demo6@example.test",
+    "profile_details": {"nationality": "قطري", "profession": "معلّم", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "3 أشهر", "height": 163, "weight": 58, "age_min": 27, "age_max": 36, "height_min": 170, "height_max": 188, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "بكالوريوس", "q2": "متوسط", "q3": "ليس مهماً", "q4": "الأخلاق"},
+    "open_answers": {"q1": "هادئة ومتفائلة وأحب التعليم والعمل الخيري.", "q2": "أتطلع إلى زوج مسؤول ومتفاهم.", "q3": "أسرة مترابطة تهتم بالتربية والحوار.", "q4": "الاحترام والجدية أساس مهم."}
+  },
+  {
+    "code": "DEMO007", "full_name": "نورة محمد", "gender": "أنثى", "birthday": "1993-06-25", "country": "السعودية", "phone": "50000007", "email": "demo7@example.test",
+    "profile_details": {"nationality": "سعودي", "profession": "طبيب", "marital_status": "متزوج سابقاً", "marriage_timeline": "6 أشهر", "height": 168, "weight": 64, "age_min": 31, "age_max": 42, "height_min": 172, "height_max": 195, "marital_preference": "لا يهم", "nationality_preference": "سعودي", "has_children": "نعم", "kids_count": 1, "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "دكتوراه", "q2": "مرتفع", "q3": "لا", "q4": "التدين"},
+    "open_answers": {"q1": "طبيبة جادة ومتزنة وأقدّر الوقت الأسري.", "q2": "أبحث عن زوج ناضج يتقبل المسؤولية الأسرية.", "q3": "حياة هادئة قائمة على الرحمة والتعاون.", "q4": "تقبل وجود طفل مسؤولية أساسية."}
+  },
+  {
+    "code": "DEMO008", "full_name": "سارة أحمد", "gender": "أنثى", "birthday": "2000-10-10", "country": "الإمارات", "phone": "50000008", "email": "demo8@example.test",
+    "profile_details": {"nationality": "إماراتي", "profession": "باحث", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "سنة واحدة", "height": 160, "weight": 55, "age_min": 26, "age_max": 34, "height_min": 168, "height_max": 185, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "إماراتي", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "ماجستير", "q2": "متوسط", "q3": "لا", "q4": "الثقافة"},
+    "open_answers": {"q1": "باحثة محبة للمعرفة وهادئة الطبع.", "q2": "أرغب في شريك يقدّر الحوار والنمو المشترك.", "q3": "أسرة واعية ومتوازنة.", "q4": "إكمال المسار العلمي مهم بالنسبة لي."}
+  },
+  {
+    "code": "DEMO009", "full_name": "هدى عبدالله", "gender": "أنثى", "birthday": "1996-03-29", "country": "الكويت", "phone": "50000009", "email": "demo9@example.test",
+    "profile_details": {"nationality": "كويتي", "profession": "محامٍ", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "شهر واحد", "height": 170, "weight": 67, "age_min": 29, "age_max": 39, "height_min": 175, "height_max": 195, "marital_preference": "لا يهم", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "ماجستير", "q2": "مرتفع", "q3": "ليس مهماً", "q4": "الاستقرار المالي"},
+    "open_answers": {"q1": "صريحة ومنظمة وأهتم بالعدل وصلة الرحم.", "q2": "أبحث عن زوج واضح وجاد في بناء الأسرة.", "q3": "بيت مستقر يحترم طموح الطرفين.", "q4": "أفضل الاتفاق المبكر على المسؤوليات."}
+  },
+  {
+    "code": "DEMO010", "full_name": "ليان يوسف", "gender": "أنثى", "birthday": "2001-12-05", "country": "قطر", "phone": "50000010", "email": "demo10@example.test",
+    "profile_details": {"nationality": "أردني", "profession": "مصمم", "marital_status": "لم أتزوج من قبل", "marriage_timeline": "6 أشهر", "height": 158, "weight": 52, "age_min": 25, "age_max": 33, "height_min": 165, "height_max": 183, "marital_preference": "لم يتزوج من قبل", "nationality_preference": "لا يهم", "chronic_diseases": "لا", "disability": "لا"},
+    "mcq_answers": {"q1": "بكالوريوس", "q2": "بسيط", "q3": "نعم", "q4": "الأخلاق"},
+    "open_answers": {"q1": "لطيفة وعملية وأحب التصميم والقراءة.", "q2": "أتطلع إلى زوج متعاون يحترم الخصوصية.", "q3": "حياة بسيطة ومستقرة وقريبة من العائلة.", "q4": "التواصل الصريح مهم بالنسبة لي."}
+  }
+]

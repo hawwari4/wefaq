@@ -9,6 +9,8 @@ from .db_schemes import (
     AdminNote,
     Notification,
     ActivityLog,
+    CompatibilityRequest,
+    SavedCandidate,
 )
 
 __all__ = [
@@ -21,4 +23,6 @@ __all__ = [
     "AdminNote",
     "Notification",
     "ActivityLog",
+    "CompatibilityRequest",
+    "SavedCandidate",
 ]

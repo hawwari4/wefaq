@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from config import (
@@ -5,10 +6,71 @@ from config import (
     SQLALCHEMY_TRACK_MODIFICATIONS,
     SECRET_KEY,
     CORS_ORIGINS,
+    SEED_DEMO_DATA,
     UPLOAD_DIR,
 )
-from models import db, Admin, User
-from utils import load_admins, load_users, hash_password
+from models import db, Admin, MCQAnswer, OpenAnswer, User, UserProfile
+from utils import load_admins, load_users, hash_password, read_json_file
+
+
+def seed_initial_super_admin():
+    """Create the configured first supervisor once, without overwriting existing credentials."""
+    admins_data = load_admins() or {}
+    super_admin_data = admins_data.get('super_admin') or {}
+    email = (super_admin_data.get('email') or '').strip().lower()
+    password = super_admin_data.get('password')
+    if not email or not password or Admin.query.filter_by(email=email).first():
+        return
+    db.session.add(Admin(
+        full_name=super_admin_data.get('full_name') or 'المدير العام',
+        phone=super_admin_data.get('phone') or '',
+        email=email,
+        city=super_admin_data.get('city') or '',
+        password_hash=hash_password(password),
+        is_super_admin=True,
+        is_active=True,
+    ))
+    db.session.commit()
+
+
+def seed_demo_candidates():
+    """Seed complete, approved trial candidates once when local demo mode is enabled."""
+    if not SEED_DEMO_DATA:
+        return 0
+    inserted = 0
+    for entry in read_json_file('demo_candidates.json') or []:
+        code = entry.get('code')
+        if not code or User.query.filter_by(code=code).first():
+            continue
+        user = User(
+            code=code,
+            full_name=entry['full_name'],
+            phone=entry.get('phone'),
+            email=entry.get('email'),
+            birthday=datetime.strptime(entry['birthday'], '%Y-%m-%d').date(),
+            gender=entry['gender'],
+            country=entry['country'],
+            status='approved',
+        )
+        db.session.add(user)
+        db.session.flush()
+        answers = entry.get('mcq_answers') or {}
+        db.session.add(UserProfile(user_id=user.id, details=entry.get('profile_details') or {}))
+        db.session.add(MCQAnswer(
+            user_id=user.id,
+            q1=answers.get('q1'), q2=answers.get('q2'), q3=answers.get('q3'), q4=answers.get('q4'),
+            answers=answers,
+        ))
+        open_answers = entry.get('open_answers') or {}
+        db.session.add(OpenAnswer(
+            user_id=user.id,
+            q1=open_answers.get('q1'), q2=open_answers.get('q2'),
+            q3=open_answers.get('q3'), q4=open_answers.get('q4'),
+        ))
+        inserted += 1
+    if inserted:
+        db.session.commit()
+    return inserted
 
 
 def create_app():
@@ -43,6 +105,8 @@ def create_app():
 
     with flask_app.app_context():
         db.create_all()
+        seed_initial_super_admin()
+        seed_demo_candidates()
 
     return flask_app
 
@@ -125,5 +189,5 @@ if __name__ == '__main__':
     # seed_database()
 
     test_db_connection()
-    print("\nالخادم جاهز للعمل (يعتمد الآن على PostgreSQL).")
+    print("\nالخادم جاهز للعمل.")
     app.run(debug=True)

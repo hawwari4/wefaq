@@ -12,7 +12,7 @@ from utils import (
     photo_url_for,
     send_welcome_email,
 )
-from security import sanitize_text, validate_email, MAX_PHONE_LEN
+from security import can_read_user, require_user_self, sanitize_text, validate_email, MAX_PHONE_LEN
 
 user_bp = Blueprint('user', __name__, url_prefix='/api')
 
@@ -224,6 +224,19 @@ def complete_application(user_id):
     mcq_data = data.get('mcq') or {}
     open_data = data.get('open') or {}
 
+    required_mcq = [
+        question.get('answer_key') or f"q{question['id']}"
+        for question in (load_questions() or {}).get('mcq', [])
+        if question.get('matching')
+    ]
+    missing_mcq = [key for key in required_mcq if not mcq_data.get(key)]
+    if missing_mcq:
+        return jsonify({
+            'success': False,
+            'message': 'يرجى الإجابة عن جميع أسئلة التوافق',
+            'missing_fields': missing_mcq,
+        }), 400
+
     ok, err_body, err_code = _apply_personal_data(user, personal)
     if not ok:
         return jsonify(err_body), err_code
@@ -257,9 +270,9 @@ def complete_application(user_id):
 @user_bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """إرجاع بيانات المستخدم مع إجاباته والملاحظات المرئية له"""
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'message': 'المستخدم غير موجود'}), 404
+    user, error = can_read_user(user_id)
+    if error:
+        return error
 
     mcq = MCQAnswer.query.filter_by(user_id=user_id).first()
     open_ans = OpenAnswer.query.filter_by(user_id=user_id).first()
@@ -294,9 +307,9 @@ def get_user(user_id):
 @user_bp.route('/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
     """تحديث البيانات الشخصية للمستخدم"""
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'message': 'المستخدم غير موجود'}), 404
+    user, error = require_user_self(user_id)
+    if error:
+        return error
 
     data = request.get_json() or {}
 

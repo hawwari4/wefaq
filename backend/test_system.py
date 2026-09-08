@@ -26,15 +26,17 @@ os.makedirs(TEST_DATA)
 os.makedirs(TEST_INSTANCE)
 
 # Seed isolated test data before importing the app
-shutil.copy(os.path.join(BACKEND_DIR, 'data', 'admins.json'), os.path.join(TEST_DATA, 'admins.json'))
-shutil.copy(os.path.join(BACKEND_DIR, 'data', 'questions.json'), os.path.join(TEST_DATA, 'questions.json'))
+shutil.copy(os.path.join(BACKEND_DIR, 'models', 'data', 'admins.json'), os.path.join(TEST_DATA, 'admins.json'))
+shutil.copy(os.path.join(BACKEND_DIR, 'models', 'data', 'questions.json'), os.path.join(TEST_DATA, 'questions.json'))
 with open(os.path.join(TEST_DATA, 'users.json'), 'w', encoding='utf-8') as f:
     json.dump([], f)
 
 os.environ['WEFAQ_DATA_DIR'] = TEST_DATA
 os.environ['WEFAQ_INSTANCE_DIR'] = TEST_INSTANCE
 os.environ['WEFAQ_TESTING'] = '1'
+os.environ['WEFAQ_SEED_DEMO'] = '0'
 os.environ['WEFAQ_SECRET_KEY'] = 'test-secret-key-not-for-production'
+os.environ['DATABASE_URL'] = f"sqlite:///{os.path.join(TEST_INSTANCE, 'wefaq-test.db')}"
 
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
@@ -91,7 +93,13 @@ def sample_personal(name='فاطمة أحمد'):
         'gender': 'أنثى',
         'country': 'السعودية',
         'guardian_phone': '0509876543',
-        'guardian_relation': 'أب'
+        'guardian_relation': 'أب',
+        'profile_details': {
+            'nationality': 'سعودي', 'profession': 'مهندس', 'marital_status': 'لم أتزوج من قبل',
+            'marriage_timeline': '3 أشهر', 'height': 170, 'weight': 70,
+            'age_min': 24, 'age_max': 40, 'height_min': 160, 'height_max': 190,
+            'marital_preference': 'لا يهم', 'nationality_preference': 'لا يهم'
+        }
     }
 
 
@@ -459,10 +467,9 @@ def test_matching_pair_opposite_gender():
     match = data['match']
     assert match['mandatory_passed'] is True
     assert match['total_score'] > 0
-    assert match['stages']['eligibility']['score'] == 30
-    assert match['confidence']['en'] in {
-        'Excellent Match', 'Strong Match', 'Moderate Match', 'Weak Match', 'Poor Match'
-    }
+    assert match['eligibility']['eligible'] is True
+    assert match['applicable_factors'] > 0
+    assert 'age_preference' in match['breakdown']
 
 
 def test_matching_same_gender_fails_mandatory():
@@ -481,7 +488,7 @@ def test_matching_same_gender_fails_mandatory():
                            f"/api/admin/matches/pair?user_a={state['user_id']}&user_b={female_id}",
                            headers=admin_headers(state['super_admin_id'])))
     assert data['match']['mandatory_passed'] is False
-    assert data['match']['total_score'] <= 39
+    assert data['match']['eligible'] is False
 
 
 def test_matching_list_for_user():

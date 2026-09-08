@@ -47,7 +47,7 @@ def list_public_matches_for_user(user_id):
         return jsonify({'success': False, 'message': 'تتاح المطابقة بعد اعتماد الطلب.'}), 403
 
     candidates = User.query.filter(User.status == 'approved', User.id != user.id).all()
-    matches = find_matches_for_user(user, candidates, limit=100, private=True)
+    matches = find_matches_for_user(user, candidates, limit=100, private=True, allowed_statuses=('approved',))
     return jsonify({'success': True, 'count': len(matches), 'matches': matches}), 200
 
 
@@ -76,6 +76,7 @@ def list_matches_for_user(user_id):
         min_score=_parse_float_arg('min_score', 0),
         limit=_parse_int_arg('limit', 20, minimum=1, maximum=100),
         include_ineligible=_parse_bool_arg('include_ineligible'),
+        allowed_statuses=tuple(statuses),
     )
 
     return jsonify({
@@ -102,7 +103,7 @@ def score_user_pair():
     if not user_a or not user_b:
         return jsonify({'success': False, 'message': 'أحد المستخدمين غير موجود'}), 404
 
-    result = score_pair(user_a, user_b)
+    result = score_pair(user_a, user_b, allowed_statuses=MATCHABLE_STATUSES)
     return jsonify({
         'success': True,
         'user_a': _candidate_summary(user_a),
