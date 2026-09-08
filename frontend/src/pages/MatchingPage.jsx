@@ -1,52 +1,144 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Card from '../components/Card'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import ApprovedUserNav from '../components/ApprovedUserNav'
 import Button from '../components/Button'
+import CandidateProfileCard from '../components/CandidateProfileCard'
 import { getMyMatches } from '../services/matchingService'
+import {
+  getCompatibilityRequests,
+  getSavedCandidates,
+  removeSavedCandidate,
+  saveCandidate,
+  sendCompatibilityRequest,
+} from '../services/matchInteractionService'
 
-const PROFILE_FIELDS = [
-  ['العمر', 'age', ' سنة'], ['الجنسية', 'nationality', ''], ['بلد الإقامة', 'country', ''],
-  ['المهنة', 'profession', ''], ['الحالة الاجتماعية', 'marital_status', ''], ['موعد الزواج المفضل', 'marriage_timeline', ''],
-]
+const REQUEST_LABELS = {
+  'sent-pending': 'تم إرسال الطلب',
+  'sent-accepted': 'تم قبول الطلب',
+  'sent-declined': 'تم الاعتذار عن الطلب',
+  'incoming-pending': 'لديك طلب وارد',
+  'incoming-accepted': 'طلب مقبول',
+  'incoming-declined': 'طلب مرفوض',
+}
 
 export default function MatchingPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [matches, setMatches] = useState(null)
   const [index, setIndex] = useState(0)
-  const [saved, setSaved] = useState(false)
-  const [interested, setInterested] = useState(false)
+  const [savedRefs, setSavedRefs] = useState(new Set())
+  const [requestStates, setRequestStates] = useState(new Map())
+  const [busy, setBusy] = useState('')
+  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
     const session = JSON.parse(localStorage.getItem('wefaq_user') || 'null')
     if (!session) return navigate('/login', { replace: true })
     if (session.status !== 'approved') return navigate('/dashboard', { replace: true })
-    getMyMatches(session.id).then((data) => setMatches(data.matches || [])).catch((err) => setError(err.message))
-  }, [navigate])
+
+    Promise.all([getMyMatches(session.id), getSavedCandidates(), getCompatibilityRequests()])
+      .then(([matchData, savedData, requestData]) => {
+        const nextMatches = matchData.matches || []
+        setMatches(nextMatches)
+        setSavedRefs(new Set((savedData.saved || []).filter((item) => item.available).map((item) => item.candidate.candidate_ref)))
+        const states = new Map()
+        ;[...(requestData.incoming || []), ...(requestData.sent || [])].forEach((item) => {
+          if (item.available) states.set(item.candidate.candidate_ref, `${item.direction}-${item.status}`)
+        })
+        setRequestStates(states)
+        const requestedRef = Number(searchParams.get('candidate'))
+        const requestedIndex = nextMatches.findIndex((item) => item.candidate.candidate_ref === requestedRef)
+        if (requestedIndex >= 0) setIndex(requestedIndex)
+      })
+      .catch((err) => setError(err.message))
+  }, [navigate, searchParams])
+
+  const match = matches?.[index]
+  const candidateRef = match?.candidate?.candidate_ref
+  const isSaved = savedRefs.has(candidateRef)
+  const requestState = requestStates.get(candidateRef)
+  const requestLabel = useMemo(() => REQUEST_LABELS[requestState] || 'إرسال طلب توافق', [requestState])
 
   function next() {
     setIndex((current) => (current + 1) % matches.length)
-    setSaved(false)
-    setInterested(false)
+    setMessage('')
+    setError('')
   }
 
-  if (error) return <div dir="rtl" className="mx-auto max-w-xl px-6 py-20 text-center"><p className="text-brick-500">{error}</p><Button variant="secondary" className="mt-5" onClick={() => navigate('/account')}>الحساب</Button></div>
-  if (!matches) return <p dir="rtl" className="py-20 text-center text-muted">جاري البحث عن المرشحين المناسبين...</p>
-  if (!matches.length) return <div dir="rtl" className="mx-auto max-w-xl px-6 py-20 text-center"><Card><h1 className="font-display text-2xl text-teal-700">لا توجد نتائج مطابقة حالياً.</h1><p className="mt-3 text-muted">سنظهر لك المرشحين المناسبين عند توفرهم.</p><Button variant="secondary" className="mt-6" onClick={() => navigate('/account')}>الحساب والإعدادات</Button></Card></div>
+  async function handleRequest() {
+    if (requestState) {
+      if (requestState.startsWith('incoming-')) navigate('/compatibility-requests')
+      return
+    }
+    setBusy('request')
+    setMessage('')
+    setError('')
+    try {
+      const data = await sendCompatibilityRequest(candidateRef)
+      setRequestStates((current) => new Map(current).set(candidateRef, `${data.request.direction}-${data.request.status}`))
+      setMessage(data.message)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
 
-  const match = matches[index]
-  const candidate = match.candidate
-  return <main dir="rtl" className="mx-auto min-h-full max-w-xl px-4 py-6 sm:px-6">
-    <header className="mb-5 flex items-center justify-between"><div><p className="text-sm text-muted">اكتشف المرشحين المناسبين</p><h1 className="font-display text-3xl text-teal-700">وِفاق</h1></div><button type="button" onClick={() => navigate('/account')} className="min-h-11 rounded-xl border border-teal-100 px-4 text-sm font-medium text-teal-700">الحساب</button></header>
-    <Card className="overflow-hidden p-0">
-      <div className="relative min-h-44 bg-teal-700 px-6 py-7 text-linen"><div className="absolute inset-0 opacity-10 mashrabiya-bg" /><div className="relative flex items-start justify-between"><div><p className="text-base">نسبة التوافق</p><p className="mt-1 font-display text-6xl leading-none">{match.compatibility_percentage}%</p></div><div className="flex h-20 w-20 items-center justify-center rounded-full border border-linen/50 bg-linen/10 text-center text-sm">الصورة<br />مخفية</div></div></div>
-      <div className="p-6"><div className="mb-5 flex items-center justify-between"><h2 className="font-display text-2xl text-teal-700">مرشح مناسب</h2><span className="rounded-full bg-gold-100 px-3 py-1 text-sm text-teal-700">{index + 1} من {matches.length}</span></div>
-        <div className="grid grid-cols-2 gap-3">{PROFILE_FIELDS.map(([label, key, suffix]) => candidate[key] && <div key={key} className="rounded-xl bg-teal-50 p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 font-medium text-ink">{candidate[key]}{suffix}</p></div>)}</div>
-        {candidate.profile_description && <section className="mt-5 rounded-xl border border-teal-100 p-4"><h3 className="font-display text-lg text-teal-700">نبذة مختصرة</h3><p className="mt-2 whitespace-pre-wrap leading-relaxed text-ink">{candidate.profile_description}</p></section>}
-        <div className="mt-6 grid grid-cols-2 gap-3"><button type="button" onClick={() => setInterested((value) => !value)} className={`min-h-12 rounded-xl border font-medium ${interested ? 'border-teal-600 bg-teal-600 text-linen' : 'border-teal-100 text-teal-700'}`}>{interested ? 'تم إبداء الاهتمام' : '♡ اهتمام'}</button><button type="button" onClick={() => setSaved((value) => !value)} className={`min-h-12 rounded-xl border font-medium ${saved ? 'border-gold-500 bg-gold-100 text-teal-700' : 'border-teal-100 text-teal-700'}`}>{saved ? 'تم الحفظ' : '☆ حفظ'}</button></div>
-        <Button onClick={next} className="mt-3 w-full">المرشح التالي ←</Button>
-      </div>
-    </Card>
-    <nav className="mt-5 grid grid-cols-2 rounded-2xl border border-teal-100 bg-white p-2 text-center text-sm"><span className="rounded-xl bg-teal-50 py-3 font-bold text-teal-700">المرشحون</span><button type="button" onClick={() => navigate('/account')} className="rounded-xl py-3 text-muted">الحساب</button></nav>
-  </main>
+  async function handleSave() {
+    setBusy('save')
+    setMessage('')
+    setError('')
+    try {
+      if (isSaved) {
+        await removeSavedCandidate(candidateRef)
+        setSavedRefs((current) => {
+          const nextSet = new Set(current)
+          nextSet.delete(candidateRef)
+          return nextSet
+        })
+        setMessage('تمت إزالة المرشح من المحفوظات.')
+      } else {
+        await saveCandidate(candidateRef)
+        setSavedRefs((current) => new Set(current).add(candidateRef))
+        setMessage('تم حفظ المرشح لتعود إليه لاحقاً.')
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy('')
+    }
+  }
+
+  if (error && !matches) return <PageMessage text={error} action={() => navigate('/account')} actionLabel="العودة إلى الحساب" />
+  if (!matches) return <p dir="rtl" className="py-20 text-center text-muted">جاري البحث عن المرشحين المناسبين...</p>
+  if (!matches.length) return <><PageMessage title="لا توجد نتائج مطابقة حالياً" text="سنظهر لك المرشحين المناسبين عند توفرهم." /><ApprovedUserNav /></>
+
+  return (
+    <main dir="rtl" className="mx-auto min-h-full max-w-xl px-4 pb-28 pt-6 sm:px-6">
+      <header className="mb-5">
+        <p className="text-sm text-muted">مساحة خاصة للمرشحين المعتمدين</p>
+        <h1 className="mt-1 font-display text-3xl text-teal-700">المرشحون المناسبون</h1>
+      </header>
+
+      <CandidateProfileCard candidate={match.candidate} compatibility={match.has_sufficient_data ? match.compatibility_percentage : null} position={`${index + 1} من ${matches.length}`}>
+        {match.compatibility_summary && <p className="mt-4 text-sm leading-6 text-muted">{match.compatibility_summary}</p>}
+        {(message || error) && <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-sm ${error ? 'bg-brick-100 text-brick-500' : 'bg-teal-50 text-teal-700'}`}>{error || message}</p>}
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <Button onClick={handleRequest} disabled={busy === 'request' || (requestState && !requestState.startsWith('incoming-'))} className="min-h-14 px-3">
+            {busy === 'request' ? 'جارٍ الإرسال...' : requestLabel}
+          </Button>
+          <Button variant="secondary" onClick={handleSave} disabled={busy === 'save'} className="min-h-14 px-3">
+            {busy === 'save' ? 'جارٍ الحفظ...' : isSaved ? 'إزالة من المحفوظات' : 'حفظ المرشح'}
+          </Button>
+        </div>
+        <button type="button" onClick={next} className="mt-3 min-h-12 w-full rounded-xl text-sm font-medium text-muted hover:bg-teal-50">عرض المرشح التالي ←</button>
+      </CandidateProfileCard>
+      <ApprovedUserNav />
+    </main>
+  )
+}
+
+function PageMessage({ title, text, action, actionLabel }) {
+  return <main dir="rtl" className="mx-auto max-w-xl px-6 py-20 text-center"><h1 className="font-display text-2xl text-teal-700">{title}</h1><p className="mt-3 text-muted">{text}</p>{action && <Button variant="secondary" className="mt-5" onClick={action}>{actionLabel}</Button>}</main>
 }

@@ -117,7 +117,7 @@ def user_needs_onboarding(user, mcq_answer=None):
     المستخدم يحتاج إكمال الطلب إذا نقصت بياناته الأساسية
     أو لم يُجب على الأسئلة بعد (حالة الكود المُولَّد لأول مرة).
     """
-    from models import OpenAnswer, UserProfile
+    from models import MCQAnswer, OpenAnswer, UserProfile
 
     name_ok = bool(user.full_name) and not is_placeholder_name(user.full_name)
     profile = UserProfile.query.filter_by(user_id=user.id).first()
@@ -129,6 +129,16 @@ def user_needs_onboarding(user, mcq_answer=None):
         details.get('height'), details.get('weight')
     ])
     if not profile_ok:
+        return True
+
+    mcq_answer = mcq_answer or MCQAnswer.query.filter_by(user_id=user.id).first()
+    required_mcq = [
+        question.get('answer_key') or f"q{question['id']}"
+        for question in (load_questions() or {}).get('mcq', [])
+        if question.get('matching')
+    ]
+    stored_mcq = mcq_answer.answers or {} if mcq_answer else {}
+    if any(not (stored_mcq.get(key) or getattr(mcq_answer, key, None)) for key in required_mcq):
         return True
 
     open_answers = OpenAnswer.query.filter_by(user_id=user.id).first()

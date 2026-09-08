@@ -1,34 +1,30 @@
-// frontend/src/pages/UserDashboardPage.jsx
 import { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import Card from '../components/Card'
-import StatusBadge from '../components/StatusBadge'
-import NotificationList from '../components/NotificationList'
+import { useLocation, useNavigate } from 'react-router-dom'
+import ApprovedUserNav from '../components/ApprovedUserNav'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
+import NotificationList from '../components/NotificationList'
+import StatusBadge from '../components/StatusBadge'
 import config from '../config.json'
-import { getUser, getUserNotifications, updateUser, getQuestions } from '../services/userService'
+import { getQuestions, getUser, getUserNotifications, updateUser } from '../services/userService'
 
 const PLACEHOLDER_NAME = 'متقدم جديد'
 
-function addDays(isoDate, days) {
-  if (!isoDate) return null
-  const d = new Date(isoDate)
-  if (Number.isNaN(d.getTime())) return null
-  d.setDate(d.getDate() + days)
-  return d
-}
-
 function formatDateTime(value) {
   if (!value) return '—'
-  const d = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('ar')
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('ar')
+}
+
+function addDays(value, days) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  date.setDate(date.getDate() + days)
+  return date
 }
 
 function displayName(name) {
-  if (!name || name.trim() === PLACEHOLDER_NAME) return ''
-  return name
+  return !name || name.trim() === PLACEHOLDER_NAME ? '' : name
 }
 
 export default function UserDashboardPage() {
@@ -37,6 +33,7 @@ export default function UserDashboardPage() {
   const [user, setUser] = useState(null)
   const [mcqAnswers, setMcqAnswers] = useState(null)
   const [openAnswers, setOpenAnswers] = useState(null)
+  const [profileDetails, setProfileDetails] = useState({})
   const [questions, setQuestions] = useState(null)
   const [visibleNotes, setVisibleNotes] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -45,53 +42,32 @@ export default function UserDashboardPage() {
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
-  const justCompleted = Boolean(location.state?.justCompleted)
 
   useEffect(() => {
-    const stored = localStorage.getItem('wefaq_user')
-    if (!stored) {
-      navigate('/login')
-      return
-    }
-    const { id } = JSON.parse(stored)
-
-    Promise.all([getUser(id), getUserNotifications(id), getQuestions()])
-      .then(([userData, notifData, questionsData]) => {
-        if (userData.user.needs_onboarding) {
-          navigate('/complete-application', { replace: true })
-          return
-        }
-        if (userData.user.status === 'approved' && location.pathname !== '/account') {
-          navigate('/matches', { replace: true })
-          return
-        }
+    const stored = JSON.parse(localStorage.getItem('wefaq_user') || 'null')
+    if (!stored) return navigate('/login', { replace: true })
+    Promise.all([getUser(stored.id), getUserNotifications(stored.id), getQuestions()])
+      .then(([userData, notificationData, questionData]) => {
+        if (userData.user.needs_onboarding) return navigate('/complete-application', { replace: true })
+        if (userData.user.status === 'approved' && location.pathname !== '/account') return navigate('/matches', { replace: true })
         setUser(userData.user)
         setMcqAnswers(userData.mcq_answers)
         setOpenAnswers(userData.open_answers)
+        setProfileDetails(userData.profile_details || {})
         setVisibleNotes(userData.visible_notes || [])
-        setQuestions(questionsData.questions)
-        setNotifications(notifData.notifications || [])
-        setForm({
-          full_name: displayName(userData.user.full_name),
-          phone: userData.user.phone || '',
-          email: userData.user.email || '',
-          birthday: userData.user.birthday || '',
-          gender: userData.user.gender || '',
-          country: userData.user.country || '',
-          guardian_relation: userData.user.guardian_relation || '',
-          guardian_phone: userData.user.guardian_phone || ''
-        })
+        setNotifications(notificationData.notifications || [])
+        setQuestions(questionData.questions)
+        setFormFromUser(userData.user)
       })
-      .catch(() => setError('تعذر جلب بيانات الحساب'))
+      .catch((err) => setError(err.message || 'تعذر جلب بيانات الحساب'))
   }, [navigate, location.pathname])
 
-  function handleLogout() {
-    localStorage.removeItem('wefaq_user')
-    navigate('/')
-  }
-
-  function handleFieldChange(name, value) {
-    setForm((prev) => ({ ...prev, [name]: value }))
+  function setFormFromUser(value) {
+    setForm({
+      full_name: displayName(value.full_name), phone: value.phone || '', email: value.email || '',
+      birthday: value.birthday || '', gender: value.gender || '', country: value.country || '',
+      guardian_relation: value.guardian_relation || '', guardian_phone: value.guardian_phone || '',
+    })
   }
 
   async function handleSave() {
@@ -99,17 +75,11 @@ export default function UserDashboardPage() {
     setError('')
     setSaveMsg('')
     try {
-      const res = await updateUser(user.id, form)
-      setUser(res.user)
+      const result = await updateUser(user.id, form)
+      setUser(result.user)
       setEditing(false)
-      setSaveMsg('تم حفظ التعديلات بنجاح')
-      localStorage.setItem('wefaq_user', JSON.stringify({
-        id: res.user.id,
-        code: res.user.code,
-        full_name: res.user.full_name,
-        status: res.user.status,
-        needs_onboarding: res.user.needs_onboarding
-      }))
+      setSaveMsg('تم حفظ التعديلات بنجاح.')
+      localStorage.setItem('wefaq_user', JSON.stringify({ id: result.user.id, code: result.user.code, full_name: result.user.full_name, status: result.user.status, needs_onboarding: result.user.needs_onboarding }))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -117,174 +87,74 @@ export default function UserDashboardPage() {
     }
   }
 
-  if (error && !user) {
-    return <p className="text-center text-brick-500 py-20">{error}</p>
+  function logout() {
+    localStorage.removeItem('wefaq_user')
+    navigate('/')
   }
 
-  if (!user) {
-    return <p className="text-center text-muted py-20">جارٍ التحميل...</p>
-  }
+  if (error && !user) return <p dir="rtl" className="py-20 text-center text-brick-500">{error}</p>
+  if (!user) return <p dir="rtl" className="py-20 text-center text-muted">جارٍ تحميل الحساب...</p>
 
-  const expectedResponse = addDays(user.created_at, 3)
+  const answerSteps = (questions?.onboarding?.steps || []).filter((step) => !['full_name', 'gender', 'birthday', 'country', 'contact'].includes(step.key))
+  const approved = user.status === 'approved'
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-6">
-      {justCompleted && (
-        <div className="bg-teal-50 border border-teal-100 rounded-xl px-4 py-3 text-sm text-teal-700">
-          تم إرسال طلبك بنجاح. يمكنك متابعة حالته وتفاصيله من هنا.
+    <main dir="rtl" className={`mx-auto max-w-3xl px-4 pt-7 sm:px-6 ${approved ? 'pb-28' : 'pb-12'}`}>
+      {location.state?.justCompleted && <p className="mb-5 rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-700">تم إرسال طلبك بنجاح. يمكنك متابعة حالته من هنا.</p>}
+
+      <header className="border-b border-teal-100 pb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div><p className="text-sm text-muted">حسابك في وِفاق</p><h1 className="mt-1 font-display text-3xl text-teal-700">{user.full_name}</h1><p className="mt-2 text-sm text-muted">رمز الحساب: <span dir="ltr" className="font-medium text-ink">{user.code}</span></p></div>
+          <StatusBadge status={user.status} />
         </div>
-      )}
+        <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm"><p><span className="text-muted">تاريخ التقديم:</span> {formatDateTime(user.created_at)}</p>{!approved && <p><span className="text-muted">الرد المتوقع:</span> {formatDateTime(addDays(user.created_at, 3))}</p>}</div>
+        {user.status_reason && <p className="mt-4 rounded-xl bg-teal-50 px-4 py-3 text-sm">{user.status_reason}</p>}
+      </header>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <div className="flex items-center justify-between mb-4 gap-3">
-            <h1 className="font-display text-2xl text-teal-700">مرحباً، {user.full_name}</h1>
-            <StatusBadge status={user.status} />
-          </div>
-          <p className="text-muted text-sm mb-2">كود الحساب: {user.code}</p>
+      {(error || saveMsg) && <p className={`mt-5 rounded-xl px-4 py-3 text-sm ${error ? 'bg-brick-100 text-brick-500' : 'bg-teal-50 text-teal-700'}`}>{error || saveMsg}</p>}
 
-          <div className="text-sm space-y-1 mb-4 bg-teal-50 rounded-xl p-3">
-            <p>
-              <span className="text-muted">تاريخ تقديم الطلب:</span>{' '}
-              {formatDateTime(user.created_at)}
-            </p>
-            <p>
-              <span className="text-muted">الرد المتوقع:</span>{' '}
-              {formatDateTime(expectedResponse)}
-            </p>
-          </div>
+      <section className="py-7 border-b border-teal-100">
+        <div className="flex items-center justify-between gap-3"><div><h2 className="font-display text-2xl text-teal-700">البيانات الشخصية</h2><p className="mt-1 text-sm text-muted">بيانات التواصل والحساب الأساسية.</p></div>{!editing && <button type="button" onClick={() => { setEditing(true); setSaveMsg('') }} className="min-h-11 rounded-xl border border-teal-100 px-4 text-sm font-medium text-teal-700">تعديل</button>}</div>
+        {editing ? <div className="mt-5 space-y-3">{config.personalFields.map((field) => <FormField key={field.name} field={field} value={form[field.name] || ''} onChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))} />)}<div className="flex gap-2 pt-2"><Button onClick={handleSave} disabled={saving}>{saving ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}</Button><Button variant="secondary" onClick={() => { setEditing(false); setError(''); setFormFromUser(user) }}>إلغاء</Button></div></div> : (
+          <dl className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2"><Info label="الجنس" value={user.gender} /><Info label="الدولة" value={user.country} /><Info label="تاريخ الميلاد" value={user.birthday} /><Info label="رقم الجوال" value={user.phone} /><Info label="البريد الإلكتروني" value={user.email} /><Info label="صلة ولي الأمر" value={user.guardian_relation} /><Info label="رقم ولي الأمر" value={user.guardian_phone} /></dl>
+        )}
+      </section>
 
-          {user.status_reason && (
-            <p className="text-sm text-ink bg-teal-50 rounded-xl p-3 mt-4">{user.status_reason}</p>
-          )}
+      <section className="grid gap-7 border-b border-teal-100 py-7 md:grid-cols-2">
+        <div><h2 className="font-display text-xl text-teal-700">الإشعارات</h2><div className="mt-4"><NotificationList notifications={notifications} /></div></div>
+        <div><h2 className="font-display text-xl text-teal-700">رسائل الإدارة</h2>{visibleNotes.length ? <ul className="mt-4 space-y-3">{visibleNotes.map((note) => <li key={note.id} className="border-r-2 border-gold-500 pr-3 text-sm"><p>{note.note_text}</p><p className="mt-1 text-xs text-muted">{note.admin_name || 'الإدارة'}{note.created_at ? ` · ${formatDateTime(note.created_at)}` : ''}</p></li>)}</ul> : <p className="mt-4 text-sm text-muted">لا توجد رسائل من الإدارة حالياً.</p>}</div>
+      </section>
 
-          {error && <p className="text-brick-500 text-sm mt-3">{error}</p>}
-          {saveMsg && <p className="text-teal-700 text-sm mt-3">{saveMsg}</p>}
-
-          {editing ? (
-            <div className="mt-6 space-y-3">
-              {config.personalFields.map((field) => (
-                <FormField
-                  key={field.name}
-                  field={field}
-                  value={form[field.name] || ''}
-                  onChange={handleFieldChange}
-                />
-              ))}
-              <div className="flex gap-3 pt-2">
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setEditing(false)
-                    setError('')
-                    setForm({
-                      full_name: displayName(user.full_name),
-                      phone: user.phone || '',
-                      email: user.email || '',
-                      birthday: user.birthday || '',
-                      gender: user.gender || '',
-                      country: user.country || '',
-                      guardian_relation: user.guardian_relation || '',
-                      guardian_phone: user.guardian_phone || ''
-                    })
-                  }}
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6 grid sm:grid-cols-2 gap-2 text-sm">
-              <p><span className="text-muted">الجنس:</span> {user.gender || '—'}</p>
-              <p><span className="text-muted">الدولة:</span> {user.country || '—'}</p>
-              <p><span className="text-muted">تاريخ الميلاد:</span> {user.birthday || '—'}</p>
-              <p><span className="text-muted">الجوال:</span> {user.phone || '—'}</p>
-              <p><span className="text-muted">البريد:</span> {user.email || '—'}</p>
-              <p><span className="text-muted">ولي الأمر:</span> {user.guardian_relation || '—'}</p>
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-6 flex-wrap">
-            {user.status === 'approved' && <Button onClick={() => navigate('/matches')}>العودة إلى المرشحين</Button>}
-            {!editing && (
-              <Button onClick={() => { setEditing(true); setSaveMsg('') }}>
-                تعديل البيانات
-              </Button>
-            )}
-            <Button variant="secondary" onClick={handleLogout}>
-              تسجيل الخروج
-            </Button>
-          </div>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <h2 className="font-display text-lg text-teal-700 mb-4">الإشعارات</h2>
-            <NotificationList notifications={notifications} />
-          </Card>
-
-          <Card>
-            <h2 className="font-display text-lg text-teal-700 mb-4">رسائل الإداري</h2>
-            {visibleNotes.length === 0 ? (
-              <p className="text-muted text-sm">لا توجد رسائل مرئية حالياً</p>
-            ) : (
-              <ul className="space-y-2">
-                {visibleNotes.map((n) => (
-                  <li key={n.id} className="text-sm bg-teal-50 rounded-lg p-3">
-                    <p>{n.note_text}</p>
-                    <p className="text-xs text-muted mt-1">
-                      {n.admin_name || 'الإدارة'}
-                      {n.created_at ? ` · ${formatDateTime(n.created_at)}` : ''}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+      <details className="group border-b border-teal-100 py-7">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between"><div><h2 className="font-display text-2xl text-teal-700">إجابات الطلب</h2><p className="mt-1 text-sm text-muted">راجع المعلومات التي قدمتها عند التسجيل.</p></div><span className="text-2xl text-gold-700 transition-transform group-open:rotate-45">＋</span></summary>
+        <div className="mt-6 space-y-7">
+          {answerSteps.length > 0 && <AnswerGroup title="بيانات الملف" items={answerSteps.map((step) => [step.title, displayAnswer(profileDetails[step.key])])} />}
+          {mcqAnswers && <AnswerGroup title="أسئلة الاختيار" items={(questions?.mcq || []).map((question) => [question.question, mcqAnswers[`q${question.id}`]])} />}
+          {openAnswers && <AnswerGroup title="الأسئلة المفتوحة" items={(questions?.open || []).map((question, index) => [question, openAnswers[`q${index + 1}`]])} />}
         </div>
-      </div>
+      </details>
 
-      <Card>
-        <h2 className="font-display text-xl text-teal-700 mb-2">تفاصيل طلبك</h2>
-        <p className="text-muted text-sm mb-6">ملخص ما أرسلته لفريق المراجعة.</p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-display text-base text-teal-700 mb-3">أسئلة الاختيار</h3>
-            {mcqAnswers ? (
-              <ul className="space-y-2 text-sm">
-                {(questions?.mcq || []).map((q) => (
-                  <li key={q.id} className="bg-teal-50 rounded-lg p-3">
-                    <p className="text-muted mb-1">{q.question}</p>
-                    <p className="text-ink">{mcqAnswers[`q${q.id}`] || '—'}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted text-sm">لا توجد إجابات بعد</p>
-            )}
-          </div>
-
-          <div>
-            <h3 className="font-display text-base text-teal-700 mb-3">الأسئلة المفتوحة</h3>
-            {openAnswers ? (
-              <ul className="space-y-2 text-sm">
-                {(questions?.open || []).map((q, idx) => (
-                  <li key={idx} className="bg-teal-50 rounded-lg p-3">
-                    <p className="text-muted mb-1">{q}</p>
-                    <p className="text-ink whitespace-pre-wrap">{openAnswers[`q${idx + 1}`] || '—'}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted text-sm">لا توجد إجابات بعد</p>
-            )}
-          </div>
-        </div>
-      </Card>
-    </div>
+      <div className="pt-7"><Button variant="secondary" onClick={logout}>تسجيل الخروج</Button></div>
+      {approved && <ApprovedUserNav />}
+    </main>
   )
+}
+
+function Info({ label, value }) {
+  return <div><dt className="text-xs text-muted">{label}</dt><dd className="mt-1 text-ink">{value || '—'}</dd></div>
+}
+
+function AnswerGroup({ title, items }) {
+  return <section><h3 className="font-display text-lg text-teal-700">{title}</h3><dl className="mt-3 divide-y divide-teal-50">{items.map(([label, value], index) => <div key={`${label}-${index}`} className="py-3 text-sm"><dt className="text-muted">{label}</dt><dd className="mt-1 whitespace-pre-wrap text-ink">{value || '—'}</dd></div>)}</dl></section>
+}
+
+function displayAnswer(value) {
+  if (value == null || value === '') return '—'
+  if (typeof value !== 'object') return String(value)
+  const labels = {
+    age_min: 'الحد الأدنى للعمر', age_max: 'الحد الأقصى للعمر', height_min: 'الحد الأدنى للطول',
+    height_max: 'الحد الأقصى للطول', marital_preference: 'الحالة الاجتماعية المفضلة',
+    ethnicity_preference: 'لون البشرة المفضل', nationality_preference: 'الجنسية المفضلة',
+  }
+  return Object.entries(value).map(([key, entry]) => `${labels[key] || key}: ${Array.isArray(entry) ? entry.join('، ') : entry}`).join(' · ')
 }

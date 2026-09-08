@@ -4,6 +4,7 @@ from routes.user_routes import user_bp
 from routes.admin_routes import admin_bp
 from routes.notification_routes import notification_bp
 from routes.matching_routes import matching_bp
+from routes.match_interaction_routes import match_interaction_bp
 
 
 def register_routes(app):
@@ -13,3 +14,4 @@ def register_routes(app):
     app.register_blueprint(admin_bp)
     app.register_blueprint(notification_bp)
     app.register_blueprint(matching_bp)
+    app.register_blueprint(match_interaction_bp)

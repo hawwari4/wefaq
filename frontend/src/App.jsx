@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage'
 import CompleteApplicationPage from './pages/CompleteApplicationPage'
 import UserDashboardPage from './pages/UserDashboardPage'
 import MatchingPage from './pages/MatchingPage'
+import CompatibilityRequestsPage from './pages/CompatibilityRequestsPage'
+import SavedCandidatesPage from './pages/SavedCandidatesPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 
@@ -24,6 +26,8 @@ export default function App() {
             <Route path="/dashboard" element={<UserDashboardPage />} />
             <Route path="/account" element={<UserDashboardPage />} />
             <Route path="/matches" element={<MatchingPage />} />
+            <Route path="/compatibility-requests" element={<CompatibilityRequestsPage />} />
+            <Route path="/saved-candidates" element={<SavedCandidatesPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           </Routes>

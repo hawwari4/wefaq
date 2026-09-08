@@ -774,7 +774,7 @@ export default function AdminDashboardPage() {
                 <ul className="space-y-3">
                   {matches.map((m) => {
                     const expanded = expandedMatchId === m.candidate.id
-                    const stages = m.stages || {}
+                    const factors = Object.entries(m.breakdown || {})
                     return (
                       <li key={m.candidate.id} className="border border-teal-100 rounded-xl overflow-hidden">
                         <button
@@ -796,31 +796,20 @@ export default function AdminDashboardPage() {
                             {!m.eligible && (
                               <span className="text-xs text-brick-600 bg-brick-50 px-2 py-1 rounded-lg">غير مؤهل</span>
                             )}
-                            <span className={`text-sm font-bold px-3 py-1 rounded-lg ${matchScoreColor(m.total_score)}`}>
-                              {m.total_score}/100
+                            <span className={`text-sm font-bold px-3 py-1 rounded-lg ${matchScoreColor(m.compatibility_percentage)}`}>
+                              {m.has_sufficient_data ? `${m.compatibility_percentage}%` : 'بيانات غير كافية'}
                             </span>
-                            <span className="text-xs text-muted">{m.confidence?.ar}</span>
                           </div>
                         </button>
 
                         {expanded && (
                           <div className="px-4 pb-4 pt-0 text-sm bg-teal-50/30 border-t border-teal-50">
-                            <div className="grid sm:grid-cols-3 gap-3 mb-3">
-                              <div className="bg-linen rounded-lg p-3">
-                                <p className="text-muted text-xs mb-1">الأهلية (30)</p>
-                                <p className="font-medium">{stages.eligibility?.score ?? 0}/30</p>
-                              </div>
-                              <div className="bg-linen rounded-lg p-3">
-                                <p className="text-muted text-xs mb-1">الاختيارات (40)</p>
-                                <p className="font-medium">{stages.mcq?.score ?? 0}/40</p>
-                              </div>
-                              <div className="bg-linen rounded-lg p-3">
-                                <p className="text-muted text-xs mb-1">المفتوحة (30)</p>
-                                <p className="font-medium">{stages.open_answers?.score ?? 0}/30</p>
-                                {stages.open_answers?.needs_manual_review && (
-                                  <p className="text-xs text-gold-700 mt-1">يُفضّل مراجعة يدوية</p>
-                                )}
-                              </div>
+                            <p className="mb-3 text-xs text-muted">احتُسبت النسبة من {m.applicable_factors} عوامل قابلة للتقييم، دون إضافة نقاط لشروط الأهلية.</p>
+                            <div className="grid sm:grid-cols-2 gap-3 mb-3">
+                              {factors.map(([key, factor]) => <div key={key} className="bg-linen rounded-lg p-3">
+                                <p className="text-muted text-xs mb-1">{factor.label}</p>
+                                <p className="font-medium">{Math.round(factor.score)}%</p>
+                              </div>)}
                             </div>
                             <button
                               type="button"

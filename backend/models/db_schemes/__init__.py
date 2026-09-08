@@ -7,6 +7,7 @@ from .admin import Admin
 from .admin_note import AdminNote
 from .notification import Notification
 from .activity_log import ActivityLog
+from .match_interaction import CompatibilityRequest, SavedCandidate
 
 __all__ = [
     "db",
@@ -18,4 +19,6 @@ __all__ = [
     "AdminNote",
     "Notification",
     "ActivityLog",
+    "CompatibilityRequest",
+    "SavedCandidate",
 ]

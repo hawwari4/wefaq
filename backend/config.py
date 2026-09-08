@@ -1,5 +1,6 @@
 # backend/config.py
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,10 +21,7 @@ SYSTEM_LOG_FILE = os.path.join(LOGS_DIR, 'system.log')
 
 _database_url = os.environ.get('DATABASE_URL', '').strip()
 if not _database_url:
-    raise RuntimeError(
-        'DATABASE_URL is not set. This project uses PostgreSQL only — '
-        'set DATABASE_URL in backend/.env (see backend/.env.example).'
-    )
+    _database_url = f"sqlite:///{Path(INSTANCE_DIR, 'wefaq.db').as_posix()}"
 # Vercel/Neon/Supabase give postgres:// URLs; SQLAlchemy 2.x requires postgresql://
 if _database_url.startswith('postgres://'):
     _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
@@ -36,6 +34,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'wefaq-secret-key-change-in-production
 # while allowing deployments and tests to override them through environment vars.
 CORS_ORIGINS = os.environ.get('WEFAQ_CORS_ORIGINS', '*')
 TESTING = os.environ.get('WEFAQ_TESTING', '').strip().lower() in {'1', 'true', 'yes'}
+SEED_DEMO_DATA = os.environ.get('WEFAQ_SEED_DEMO', '').strip().lower() in {'1', 'true', 'yes'}
 
 # الاسم الافتراضي عند توليد كود بدون اسم مخصص
 DEFAULT_USER_NAME = 'متقدم جديد'
