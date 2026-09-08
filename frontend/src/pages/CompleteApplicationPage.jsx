@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getQuestions, getUser, completeApplication } from '../services/userService'
+import { NumericRangeSlider, NumericSlider } from '../components/NumericSlider'
 
 const PLACEHOLDER_NAME = 'متقدم جديد'
 function displayName(name) {
@@ -32,15 +33,31 @@ function SearchSelector({ question, value, onChange, otherOption }) {
 }
 
 function RangeField({ field, details, setDetail }) {
-  const min = details[field.min_key] ?? field.default_min
-  const max = details[field.max_key] ?? field.default_max
-  const range = field.max - field.min
-  return <div className="rounded-2xl bg-teal-50 p-5"><div className="mb-5 flex justify-between font-bold text-teal-700"><span>الحد الأدنى: {min} {field.unit}</span><span>الحد الأقصى: {max} {field.unit}</span></div><div dir="ltr" className="dual-range" style={{ '--min': `${((min - field.min) / range) * 100}%`, '--max': `${((max - field.min) / range) * 100}%` }}><div className="dual-range__track" /><input aria-label="الحد الأدنى للعمر" type="range" min={field.min} max={field.max} value={min} onChange={(event) => setDetail(field.min_key, Math.min(+event.target.value, max))} /><input aria-label="الحد الأقصى للعمر" type="range" min={field.min} max={field.max} value={max} onChange={(event) => setDetail(field.max_key, Math.max(+event.target.value, min))} /></div></div>
+  return <NumericRangeSlider label={field.title} minimum={field.min} maximum={field.max} minValue={details[field.min_key] ?? field.default_min} maxValue={details[field.max_key] ?? field.default_max} onMinChange={(value) => setDetail(field.min_key, value)} onMaxChange={(value) => setDetail(field.max_key, value)} unit={field.unit} />
 }
 
 function SliderField({ question, value, onChange }) {
-  const selected = Number(value || question.default || question.min)
-  return <div className="rounded-2xl bg-teal-50 p-5"><div className="mb-5 text-center"><strong className="text-4xl text-teal-700">{selected}</strong><span className="mr-2 text-lg text-muted">{question.suffix}</span></div><div dir="ltr" className="single-range"><input aria-label={question.title} type="range" min={question.min} max={question.max} value={selected} onChange={(event) => onChange(question, +event.target.value)} /></div><div className="mt-3 flex justify-between text-sm text-muted"><span>{question.min} {question.suffix}</span><span>{question.max} {question.suffix}</span></div></div>
+  return <NumericSlider label={question.title} minimum={question.min} maximum={question.max} value={value ?? question.default ?? question.min} onChange={(selected) => onChange(question, selected)} unit={question.suffix} />
+}
+
+function clampValue(value, minimum, maximum, fallback) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? Math.min(Math.max(numeric, minimum), maximum) : fallback
+}
+
+function normalizeNumericDetails(questionData, storedDetails) {
+  const normalized = { ...storedDetails }
+  const steps = questionData.onboarding?.steps || []
+  steps.filter((step) => step.type === 'slider').forEach((step) => {
+    normalized[step.key] = clampValue(storedDetails[step.key], step.min, step.max, step.default ?? step.min)
+  })
+  steps.filter((step) => step.type === 'preferences').flatMap((step) => step.fields || []).filter((field) => field.type === 'range').forEach((field) => {
+    const lower = clampValue(storedDetails[field.min_key], field.min, field.max, field.default_min)
+    const upper = Math.max(lower, clampValue(storedDetails[field.max_key], field.min, field.max, field.default_max))
+    normalized[field.min_key] = lower
+    normalized[field.max_key] = upper
+  })
+  return normalized
 }
 
 function nameValidation(value) {
@@ -77,7 +94,7 @@ export default function CompleteApplicationPage() {
       const rangeDefaults = Object.fromEntries((preferenceQuestion?.fields || [])
         .filter((field) => field.type === 'range')
         .flatMap((field) => [[field.min_key, field.default_min], [field.max_key, field.default_max]]))
-      setDetails({ ...rangeDefaults, ...(data.profile_details || {}) })
+      setDetails(normalizeNumericDetails(questionData.questions, { ...rangeDefaults, ...(data.profile_details || {}) }))
       setMcqAnswers(data.mcq_answers || {})
       setAnswers(data.open_answers || {})
       setQuestionSet(questionData.questions)
