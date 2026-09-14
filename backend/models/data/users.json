@@ -1150,5 +1150,50 @@
       "q3": "جميله وورديه",
       "q4": "لا"
     }
+  },
+  {
+    "id": 96,
+    "code": "USER98486",
+    "full_name": "علي محمد",
+    "phone": "+974838383",
+    "email": "ar3380800@gmail.com",
+    "birthday": "2004-01-20",
+    "gender": "ذكر",
+    "guardian_phone": "",
+    "guardian_relation": "",
+    "photo_path": "",
+    "country": "السعودية",
+    "status": "reviewing",
+    "status_reason": "",
+    "assigned_admin_id": 1,
+    "created_at": "2026-09-08 18:54:19",
+    "profile_details": {
+      "age_min": 29,
+      "age_max": 48,
+      "height_min": 159,
+      "height_max": 176,
+      "height": 179,
+      "weight": 103,
+      "nationality": "سعودي",
+      "profession": "مصمم",
+      "marital_status": "لم أتزوج من قبل",
+      "marriage_timeline": "3 أشهر",
+      "chronic_diseases": "لا",
+      "disability": "لا",
+      "marital_preference": "لا يهم",
+      "ethnicity_preference": "فاتح",
+      "nationality_preference": "كويتي"
+    },
+    "mcq_answers": {
+      "q1": "بكالوريوس",
+      "q2": "مرتفع",
+      "q4": "التدين"
+    },
+    "open_answers": {
+      "q1": "ض",
+      "q2": "ض",
+      "q3": "ض",
+      "q4": "ض"
+    }
   }
 ]
